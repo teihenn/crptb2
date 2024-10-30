@@ -157,6 +157,7 @@ dependencies = [
     { name = "numpy" },
     { name = "pandas" },
     { name = "ruff" },
+    { name = "ta-lib" },
 ]
 
 [package.metadata]
@@ -165,6 +166,7 @@ requires-dist = [
     { name = "numpy", specifier = "==1.26.4" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "ruff", specifier = ">=0.7.1" },
+    { name = "ta-lib", specifier = ">=0.4.32" },
 ]
 
 [[package]]
@@ -407,6 +409,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/71/39/171f1c67cd00715f1
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d9/5a/e7c31adbe875f2abbb91bd84cf2dc52d792b5a01506781dbcf25c91daf11/six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254", size = 11053 },
 ]
+
+[[package]]
+name = "ta-lib"
+version = "0.4.32"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/37/f5/749d1b1e4d2eb22b37da5c96529b01f8c4daaf9e30428166cd3185832500/TA-Lib-0.4.32.tar.gz", hash = "sha256:fb74c323217bead847a045c97aa17bfd147aef17e20a75857ea0f8f7ee7cdaa0", size = 368477 }
 
 [[package]]
 name = "typing-extensions"

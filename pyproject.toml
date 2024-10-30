@@ -9,4 +9,5 @@ dependencies = [
     "numpy==1.26.4", # ta-libがnumpy ver2以上をサポートしないためver1の最新を指定
     "pandas>=2.2.3",
     "ruff>=0.7.1",
+    "ta-lib>=0.4.32",
 ]
