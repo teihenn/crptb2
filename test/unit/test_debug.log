@@ -1,0 +1,42 @@
+24-11-02 2:06 ~/Projects/crptb2 $ uv run python -m unittest test.unit.test_debug.ExchangeDebug.test_fetch_ticker &> test/unit/test_debug.log
+.
+----------------------------------------------------------------------
+Ran 1 test in 1.864s
+
+OK
+
+=== Ticker Details ===
+Symbol: BTC/USDT
+Timestamp: None
+Datetime: None
+
+=== Price Information ===
+Last: 69875.19
+Bid: 69875.61
+Ask: 69875.62
+High: 71638.32
+Low: 68837.29
+
+=== All Available Fields ===
+symbol: BTC/USDT
+timestamp: None
+datetime: None
+high: 71638.32
+low: 68837.29
+bid: 69875.61
+bidVolume: 0.075067
+ask: 69875.62
+askVolume: 0.127908
+vwap: 70096.00243653769
+open: 70502.14
+close: 69875.19
+last: 69875.19
+previousClose: None
+change: -626.95
+percentage: -0.89
+average: 70188.66
+baseVolume: 19422.985772
+quoteVolume: 1361473657.9989488
+markPrice: None
+indexPrice: None
+info: {'symbol': 'BTCUSDT', 'bid1Price': '69875.61', 'bid1Size': '0.075067', 'ask1Price': '69875.62', 'ask1Size': '0.127908', 'lastPrice': '69875.19', 'prevPrice24h': '70502.14', 'price24hPcnt': '-0.0089', 'highPrice24h': '71638.32', 'lowPrice24h': '68837.29', 'turnover24h': '1361473657.9989488', 'volume24h': '19422.985772', 'usdIndexPrice': '69841.48442'}
