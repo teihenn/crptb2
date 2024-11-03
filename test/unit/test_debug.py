@@ -25,28 +25,32 @@ class ExchangeDebug(unittest.TestCase):
             buy_leverage=2,
             sell_leverage=2,
             margin_type="isolated",
-            timeframe="1m",
+            timeframe="15m",
             max_position=1,
             retry_count=3,
             retry_interval=5,
         )
         self.exchange = exc.create_exchange(self.config)
 
-    def test_fetch_ticker(self):
-        """ティッカー情報の表示"""
-        ticker = self.exchange.fetch_ticker(self.config.symbol)
+    def test_fetch_ohlcv(self):
+        """OHLCV（ローソク足）データの表示"""
+        print("\n---------- test_fetch_ohlcv ----------")
+        ohlcv = self.exchange.fetch_ohlcv(
+            self.config.symbol,
+            timeframe=self.config.timeframe,
+            limit=5,  # 直近5件のデータを取得
+        )
 
-        print("\n=== Ticker Details ===")
-        print(f"Symbol: {ticker['symbol']}")
-        print(f"Timestamp: {ticker['timestamp']}")
-        print(f"Datetime: {ticker['datetime']}")
-        print("\n=== Price Information ===")
-        print(f"Last: {ticker['last']}")
-        print(f"Bid: {ticker['bid']}")
-        print(f"Ask: {ticker['ask']}")
-        print(f"High: {ticker['high']}")
-        print(f"Low: {ticker['low']}")
+        print("\n=== OHLCV Details ===")
+        print(f"Symbol: {self.config.symbol}")
+        print(f"Timeframe: {self.config.timeframe}")
 
-        print("\n=== All Available Fields ===")
-        for key, value in ticker.items():
-            print(f"{key}: {value}")
+        print("\n=== Latest Candles ===")
+        for candle in ohlcv:
+            timestamp = self.exchange.iso8601(candle[0])
+            print(f"\nTimestamp: {timestamp}")
+            print(f"Open: {candle[1]}")
+            print(f"High: {candle[2]}")
+            print(f"Low: {candle[3]}")
+            print(f"Close: {candle[4]}")
+            print(f"Volume: {candle[5]}")
