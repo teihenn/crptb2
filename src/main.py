@@ -160,10 +160,6 @@ def main():
                         )
                     strategy.position = position
 
-                # 時間軸に基づいて待機
-                sleep_time = get_sleep_time(config.timeframe)
-                time.sleep(sleep_time)
-
             except Exception as e:
                 logger.error(f"ループ内でエラーが発生しました: {str(e)}", exc_info=True)
                 time.sleep(config.retry_interval)
