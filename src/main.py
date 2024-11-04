@@ -57,8 +57,9 @@ def main():
     # ロガーの初期化
     logger = Logger.get_logger()
     logger.info("\n")  # 前のログと区切るために改行
-    discord.print_and_notify("Starting trading bot...")
 
+    bot_activate_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    discord.print_and_notify(f"🤖 Starting trading bot... ({bot_activate_time})")
     discord.print_and_notify(f"Config: {config}")
 
     try:
