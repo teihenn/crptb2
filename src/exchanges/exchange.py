@@ -1,28 +1,51 @@
+import logging
+from typing import List, Optional
+
 import ccxt
 
-from src.config import ExchangeConfig
-from src.exchanges import bybit
+# from src.exchanges import bybit
+
+logger = logging.getLogger(__name__)
 
 
-def create_exchange(config: ExchangeConfig) -> ccxt.Exchange:
-    """取引所インスタンスを作成する
+class MyExchange:
+    def __init__(self, exchange: ccxt.Exchange):
+        self._exchange = exchange
 
-    Args:
-        config (ExchangeConfig): 取引所の設定情報
+    @classmethod
+    def create(cls, config) -> "MyExchange":
+        """取引所インスタンスを作成"""
+        exchange_class = getattr(ccxt, config.exchange)
+        exchange = exchange_class(
+            {"apiKey": config.api_key, "secret": config.api_secret}
+        )
+        return cls(exchange)
 
-    Returns:
-        ccxt.Exchange: 設定済みの取引所インスタンス
+    def fetch_ohlcv(
+        self, symbol: str, timeframe: str = "1m", limit: Optional[int] = None
+    ) -> List[List]:
+        """
+        OHLCVデータを取得
+        Returns:
+            [[timestamp, open, high, low, close, volume], ...]
+        """
+        logger.debug(
+            f"Fetching OHLCV - Symbol: {symbol}, Timeframe: {timeframe}, Limit: {limit}"
+        )
+        data = self._exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
+        logger.debug(f"Fetched {len(data)} candles")
+        return data
 
-    Raises:
-        AttributeError: 指定された取引所名が存在しない場合
-        BadRequest: 取引所固有の設定に失敗した場合
-        MarginModeAlreadySet: 証拠金モード設定に失敗した場合
-    """
-    exchange = getattr(ccxt, config.name)(config.get_ccxt_config())
+    def fetch_time(self) -> int:
+        """サーバー時刻を取得（ミリ秒）"""
+        return self._exchange.fetch_time()
 
-    # 取引所固有の初期設定
-    if config.name == "bybit":
-        # exchange = bybit.config(exchange, config)
-        pass
+    def create_market_buy_order(self, symbol: str, amount: float):
+        """成行買い注文"""
+        logger.info(f"Creating market buy order - Symbol: {symbol}, Amount: {amount}")
+        return self._exchange.create_market_buy_order(symbol, amount)
 
-    return exchange
+    def create_market_sell_order(self, symbol: str, amount: float):
+        """成行売り注文"""
+        logger.info(f"Creating market sell order - Symbol: {symbol}, Amount: {amount}")
+        return self._exchange.create_market_sell_order(symbol, amount)
