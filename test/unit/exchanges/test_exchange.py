@@ -1,7 +1,7 @@
 import unittest
 
-import src.exchanges.exchange as sut
-from src.config import ExchangeConfig
+import src.exchanges.my_exchange as sut
+from src.config.config import ExchangeConfig
 from test.config_for_test import BYBIT_TEST_CONFIG
 
 
@@ -25,10 +25,10 @@ class TestExchange(unittest.TestCase):
             retry_interval=5,
         )
 
-        exchange = sut.create_exchange(config)
+        actual = sut.MyExchange.create(config)
 
-        print(f"exchange: {exchange}")
+        print(f"exchange: {actual}")
 
-        self.assertEqual(exchange.apiKey, config.api_key)
-        self.assertEqual(exchange.secret, config.api_secret)
-        self.assertEqual(exchange.options.get("defaultType"), "future")
+        self.assertEqual(actual._exchange.apiKey, config.api_key)
+        self.assertEqual(actual._exchange.secret, config.api_secret)
+        self.assertEqual(actual._exchange.options.get("defaultType"), "future")
