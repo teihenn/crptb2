@@ -18,3 +18,7 @@ exchange:
   max_position: 0.001
   retry_count: 3
   retry_interval: 5
+
+discord:
+  webhook_url: ""
+  enabled: true

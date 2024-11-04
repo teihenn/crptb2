@@ -1,14 +1,33 @@
 import time
-from pathlib import Path
 
 import src.exchanges.my_exchange as myexc
 from src.config.config import Config
 from src.strategy.new_rci_3 import RCIStrategy
+from src.utils.discord import DiscordNotifier
 from src.utils.logger import Logger
 
 
 def get_next_candle_time(timeframe: str, current_timestamp: int) -> int:
-    """次のローソク足の開始時刻を計算（ミリ秒）"""
+    """
+    次のローソク足の開始時刻を計算（ミリ秒）
+
+    Parameters:
+    -----------
+    timeframe : str
+        タイムフレーム（"1m", "5m", "15m", "1h", "4h", "1d"）
+    current_timestamp : int
+        現在のタイムスタンプ（ミリ秒）
+
+    Returns:
+    --------
+    int
+        次のローソク足の開始時刻（ミリ秒）
+
+    Raises:
+    -------
+    ValueError
+        無効なタイムフレームが指定された場合
+    """
     intervals = {
         "1m": 60000,
         "5m": 300000,
@@ -17,7 +36,13 @@ def get_next_candle_time(timeframe: str, current_timestamp: int) -> int:
         "4h": 14400000,
         "1d": 86400000,
     }
-    interval = intervals.get(timeframe, 60000)
+
+    interval = intervals.get(timeframe)
+    if interval is None:
+        raise ValueError(
+            f"無効なタイムフレーム: {timeframe}。有効な値: {list(intervals.keys())}"
+        )
+
     return ((current_timestamp // interval) + 1) * interval
 
 
@@ -25,12 +50,14 @@ def main():
     # 設定の読み込み
     config = Config.load()
 
+    discord = DiscordNotifier(config.discord.webhook_url)
+
     # ロガーの初期化
     logger = Logger.get_logger()
     logger.info("\n")  # 前のログと区切るために改行
-    logger.info("Starting trading bot...")
+    discord.print_and_notify("Starting trading bot...")
 
-    logger.info(f"Config: {config}")
+    discord.print_and_notify(f"Config: {config}")
 
     try:
         # 取引所の初期化
@@ -65,6 +92,7 @@ def main():
                 # 待機時間を計算（秒に変換）
                 wait_time = (next_candle_time - current_server_time) / 1000
                 if wait_time > 0:
+                    logger.debug(f"ローソク足更新までの待機時間: {wait_time}秒")
                     time.sleep(wait_time)
 
                 # 少し待機して確実に新しいローソク足のデータを取得できるようにする。
@@ -115,7 +143,9 @@ def main():
                     strategy.position = position
 
             except Exception as e:
-                logger.error(f"ループ内でエラーが発生しました: {str(e)}", exc_info=True)
+                discord.print_and_notify(
+                    f"ループ内でエラーが発生しました: {str(e)}", level="error"
+                )
                 time.sleep(config.exchange.retry_interval)
 
     except Exception as e:
