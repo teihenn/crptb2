@@ -1,4 +1,6 @@
 import time
+import traceback
+from datetime import datetime
 
 import src.exchanges.my_exchange as myexc
 from src.config.config import Config
@@ -143,9 +145,22 @@ def main():
                     strategy.position = position
 
             except Exception as e:
-                discord.print_and_notify(
-                    f"ループ内でエラーが発生しました: {str(e)}", level="error"
+
+                error_location = traceback.extract_tb(e.__traceback__)[-1]
+                file_name = error_location.filename.split("/")[-1]  # ファイル名のみ抽出
+                line_no = error_location.lineno
+                func_name = error_location.name
+
+                error_message = (
+                    f"エラーが発生しました:\n"
+                    f"場所: {file_name}, 行: {line_no}, 関数: {func_name}\n"
+                    f"種類: {type(e).__name__}\n"
+                    f"詳細: {str(e)}\n"
+                    f"スタックトレース:\n{traceback.format_exc()}"
                 )
+
+                discord.print_and_notify(error_message, "エラー通知", level="error")
+
                 time.sleep(config.exchange.retry_interval)
 
     except Exception as e:
