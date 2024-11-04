@@ -1,11 +1,11 @@
 import unittest
 
-import src.exchanges.exchange as exc
-from src.config import ExchangeConfig
+import src.exchanges.my_exchange as myexc
+from src.config.config import ExchangeConfig
 from test.config_for_test import BYBIT_TEST_CONFIG
 
 
-class ExchangeDebug(unittest.TestCase):
+class TestExchangeDebug(unittest.TestCase):
     """取引所APIの動作確認用デバッグクラス
 
     Note:
@@ -30,7 +30,7 @@ class ExchangeDebug(unittest.TestCase):
             retry_count=3,
             retry_interval=5,
         )
-        self.exchange = exc.create_exchange(self.config)
+        self.exchange = myexc.MyExchange.create(self.config)
 
     def test_fetch_ohlcv(self):
         """OHLCV（ローソク足）データの表示"""
@@ -46,11 +46,11 @@ class ExchangeDebug(unittest.TestCase):
         print(f"Timeframe: {self.config.timeframe}")
 
         print("\n=== Latest Candles ===")
-        for candle in ohlcv:
-            timestamp = self.exchange.iso8601(candle[0])
-            print(f"\nTimestamp: {timestamp}")
-            print(f"Open: {candle[1]}")
-            print(f"High: {candle[2]}")
-            print(f"Low: {candle[3]}")
-            print(f"Close: {candle[4]}")
-            print(f"Volume: {candle[5]}")
+        candle = ohlcv[-2]  # 最新の確定足
+        timestamp = self.exchange._exchange.iso8601(candle[0])
+        print(f"\nTimestamp: {timestamp}")
+        print(f"Open: {candle[1]}")
+        print(f"High: {candle[2]}")
+        print(f"Low: {candle[3]}")
+        print(f"Close: {candle[4]}")
+        print(f"Volume: {candle[5]}")
