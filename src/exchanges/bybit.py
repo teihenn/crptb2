@@ -1,7 +1,7 @@
 import ccxt
 from ccxt.base.errors import BadRequest, MarginModeAlreadySet
 
-from src.config import ExchangeConfig
+from config.config import ExchangeConfig
 
 
 def config(exchange: ccxt.Exchange, config: ExchangeConfig) -> ccxt.Exchange:
