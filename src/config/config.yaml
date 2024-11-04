@@ -1,0 +1,20 @@
+# ログ設定
+logging:
+  level: DEBUG
+  file: trading_bot.log
+
+# 取引所設定
+exchange:
+  name: bybit
+  api_key: ""
+  api_secret: ""
+  symbol: BTCUSDT
+  position_size: 0.001
+  leverage: 1
+  buy_leverage: 1
+  sell_leverage: 1
+  margin_type: isolated
+  timeframe: 15m
+  max_position: 0.001
+  retry_count: 3
+  retry_interval: 5
