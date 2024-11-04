@@ -3,15 +3,28 @@ import pandas as pd
 
 def calculate_rci(df, period):
     """
-    RCIを計算する関数
+    指定した期間のRCIを計算する関数
+
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        価格データを含むデータフレーム
+    period : int
+        RCI計算期間
+
+    Returns:
+    --------
+    float
+        最新のRCI値
     """
-    close_prices = df["Close"].values.tolist()
-    rci = []
-    for i in range(period, len(close_prices)):
-        period_prices = close_prices[i - period : i]
-        ranked_prices = sorted(period_prices, reverse=True)
-        price_ranks = [ranked_prices.index(price) + 1 for price in period_prices]
-        d = sum([(rank - (period + 1) / 2) ** 2 for rank in price_ranks])
-        rci_value = (1 - 6 * d / (period * (period**2 - 1))) * 100
-        rci.append(rci_value)
-    return pd.Series(rci, index=df.index[period:])
+    close_prices = df["Close"].values.tolist()[-period:]
+    # 時系列の順位（新しいデータほど大きい順位）
+    time_ranks = list(range(period, 0, -1))
+    # 価格の順位（降順）を計算
+    price_ranks = pd.Series(close_prices).rank(ascending=False).tolist()
+
+    # RCIの計算
+    d = sum([(p_rank - t_rank) ** 2 for p_rank, t_rank in zip(price_ranks, time_ranks)])
+    rci_value = (1 - 6 * d / (period * (period**2 - 1))) * 100
+
+    return rci_value
