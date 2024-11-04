@@ -1,62 +1,10 @@
-import logging
 import time
+from pathlib import Path
 
-import src.exchanges.exchange as exc
-from src.config import BYBIT
+import src.exchanges.my_exchange as myexc
+from src.config.config import Config
 from src.strategy.new_rci_3 import RCIStrategy
-
-
-def setup_logger():
-    """ロガーの設定"""
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-
-    # ファイルハンドラの設定
-    fh = logging.FileHandler("trading_bot.log")
-    fh.setLevel(logging.INFO)
-
-    # コンソールハンドラの設定
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
-
-    # フォーマッターの設定
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
-
-    # ハンドラの追加
-    logger.addHandler(fh)
-    logger.addHandler(ch)
-
-    return logger
-
-
-def get_sleep_time(timeframe: str) -> int:
-    """
-    時間軸に基づいて待機時間を計算
-    """
-    sleep_seconds = {
-        "1m": 60,
-        "5m": 300,
-        "15m": 900,
-        "1h": 3600,
-        "4h": 14400,
-        "1d": 86400,
-    }
-    return sleep_seconds.get(timeframe, 60)  # デフォルトは60秒
-
-
-def get_time_offset(exchange) -> int:
-    """
-    取引所のサーバー時刻と現在時刻のオフセットを計算する。
-    TODO: fetch_time()はすべての取引所でサポートされているわけではないかもしれないので注意
-    Bybitはサポートされている。
-    """
-    server_time = exchange.fetch_time()  # ミリ秒
-    local_time = int(time.time() * 1000)  # ローカル時刻をミリ秒に変換
-    return server_time - local_time
+from src.utils.logger import Logger
 
 
 def get_next_candle_time(timeframe: str, current_timestamp: int) -> int:
@@ -74,22 +22,28 @@ def get_next_candle_time(timeframe: str, current_timestamp: int) -> int:
 
 
 def main():
-    # ロガーの初期化
-    logger = setup_logger()
-
     # 設定の読み込み
-    config = BYBIT
+    config = Config.load()
+
+    # ロガーの初期化
+    logger = Logger.get_logger()
+    logger.info("\n")  # 前のログと区切るために改行
+    logger.info("Starting trading bot...")
+
+    logger.info(f"Config: {config}")
 
     try:
         # 取引所の初期化
-        exchange = exc.create_exchange(config)
+        exchange: myexc.MyExchange = myexc.MyExchange.create(config.exchange)
 
         # ストラテジーの初期化
-        strategy = RCIStrategy(config)
+        strategy = RCIStrategy(config.exchange)
 
         # 初期データの取得
         initial_data = exchange.fetch_ohlcv(
-            config.symbol, timeframe=config.timeframe, limit=strategy.required_bars
+            config.exchange.symbol,
+            timeframe=config.exchange.timeframe,
+            limit=strategy.required_bars,
         )
 
         # 初期データを履歴に追加
@@ -97,7 +51,7 @@ def main():
             strategy.update_historical_data(candle[4])  # close価格を追加
 
         # 時刻オフセットを取得
-        time_offset = get_time_offset(exchange)
+        time_offset = exchange.get_time_offset()
         logger.info(f"サーバー時刻とのオフセット: {time_offset}ms")
 
         while True:
@@ -105,7 +59,7 @@ def main():
                 # ローカル時刻にオフセットを適用してサーバー時刻を取得（ミリ秒）
                 current_server_time = int(time.time() * 1000) + time_offset
                 next_candle_time = get_next_candle_time(
-                    config.timeframe, current_server_time
+                    config.exchange.timeframe, current_server_time
                 )
 
                 # 待機時間を計算（秒に変換）
@@ -119,12 +73,12 @@ def main():
 
                 # 定期的にオフセットを再計算
                 if time.time() % 3600 < 10:  # 1時間ごとに更新
-                    time_offset = get_time_offset(exchange)
+                    time_offset = exchange.get_time_offset()
                     logger.info(f"サーバー時刻とのオフセットを更新: {time_offset}ms")
 
                 # 価格データを取得
                 ohlcv = exchange.fetch_ohlcv(
-                    config.symbol, timeframe=config.timeframe, limit=1
+                    config.exchange.symbol, timeframe=config.exchange.timeframe, limit=1
                 )
 
                 current_price = ohlcv[-1][4]
@@ -139,11 +93,11 @@ def main():
                 if strategy.position and strategy.should_exit(df):
                     if strategy.position == "long":
                         exchange.create_market_sell_order(
-                            config.symbol, config.position_size
+                            config.exchange.symbol, config.exchange.position_size
                         )
                     else:
                         exchange.create_market_buy_order(
-                            config.symbol, config.position_size
+                            config.exchange.symbol, config.exchange.position_size
                         )
                     strategy.position = None
 
@@ -152,17 +106,17 @@ def main():
                 if should_entry and not strategy.position:
                     if position == "long":
                         exchange.create_market_buy_order(
-                            config.symbol, config.position_size
+                            config.exchange.symbol, config.exchange.position_size
                         )
                     else:
                         exchange.create_market_sell_order(
-                            config.symbol, config.position_size
+                            config.exchange.symbol, config.exchange.position_size
                         )
                     strategy.position = position
 
             except Exception as e:
                 logger.error(f"ループ内でエラーが発生しました: {str(e)}", exc_info=True)
-                time.sleep(config.retry_interval)
+                time.sleep(config.exchange.retry_interval)
 
     except Exception as e:
         logger.error(f"初期化時にエラーが発生しました: {str(e)}", exc_info=True)
