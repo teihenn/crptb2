@@ -72,12 +72,14 @@ def main():
         initial_data = exchange.fetch_ohlcv(
             config.exchange.symbol,
             timeframe=config.exchange.timeframe,
-            limit=strategy.required_bars,
+            limit=strategy.required_bars + 1,
         )
 
-        # 初期データを履歴に追加
-        for candle in initial_data:
-            strategy.update_historical_data(candle[4])  # close価格を追加
+        # 初期データを履歴に追加（最後の未確定足を除外）
+        for candle in initial_data[:-1]:  # 最後の要素（未確定足）を除外
+            timestamp = candle[0]
+            close_price = float(candle[4])
+            strategy.update_historical_data(timestamp, close_price, enable_log=False)
 
         # 時刻オフセットを取得
         time_offset = exchange.get_time_offset()
@@ -106,15 +108,17 @@ def main():
                     time_offset = exchange.get_time_offset()
                     logger.info(f"サーバー時刻とのオフセットを更新: {time_offset}ms")
 
-                # 価格データを取得
+                # 最新の確定足を取得
                 ohlcv = exchange.fetch_ohlcv(
-                    config.exchange.symbol, timeframe=config.exchange.timeframe, limit=1
+                    config.exchange.symbol,
+                    timeframe=config.exchange.timeframe,
+                    limit=2,  # 2つ取得して、最新の確定足を使用する
                 )
 
-                current_price = ohlcv[-1][4]
-
-                # 価格データを履歴に追加
-                strategy.update_historical_data(current_price)
+                latest_candle = ohlcv[-2]  # 最後から2番目（確定済み）のローソク足を使用
+                timestamp = latest_candle[0]
+                close_price = float(latest_candle[4])
+                strategy.update_historical_data(timestamp, close_price)
 
                 # インジケーターを計算
                 df = strategy.calculate_indicators(strategy.historical_data)
@@ -145,7 +149,6 @@ def main():
                     strategy.position = position
 
             except Exception as e:
-
                 error_location = traceback.extract_tb(e.__traceback__)[-1]
                 file_name = error_location.filename.split("/")[-1]  # ファイル名のみ抽出
                 line_no = error_location.lineno
