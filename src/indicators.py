@@ -1,7 +1,8 @@
+import numpy as np
 import pandas as pd
 
 
-def calculate_rci(df, period):
+def calculate_rci(df: pd.DataFrame, period: int) -> pd.Series:
     """
     指定した期間のRCIを計算する関数
 
@@ -14,17 +15,32 @@ def calculate_rci(df, period):
 
     Returns:
     --------
-    float
-        最新のRCI値
+    pandas.Series
+        各時点のRCI値
     """
-    close_prices = df["Close"].values.tolist()[-period:]
-    # 時系列の順位（新しいデータほど大きい順位）
-    time_ranks = list(range(period, 0, -1))
-    # 価格の順位（降順）を計算
-    price_ranks = pd.Series(close_prices).rank(ascending=False).tolist()
+    if len(df) < period:
+        return pd.Series(index=df.index, dtype=float)
 
-    # RCIの計算
-    d = sum([(p_rank - t_rank) ** 2 for p_rank, t_rank in zip(price_ranks, time_ranks)])
-    rci_value = (1 - 6 * d / (period * (period**2 - 1))) * 100
+    # 移動窓でRCIを計算
+    rci_values = []
+    close_series = df["Close"]
 
-    return rci_value
+    for i in range(period - 1, len(df)):
+        window = close_series.iloc[i - period + 1 : i + 1]
+
+        # 時系列順位（新しい方が大きい）
+        time_ranks = np.arange(1, period + 1)
+
+        # 価格順位（高い方が大きい）
+        price_ranks = window.rank()
+
+        # RCI計算
+        d_square = np.sum((time_ranks - price_ranks) ** 2)
+        rci = (1 - 6 * d_square / (period * (period**2 - 1))) * 100
+        rci_values.append(rci)
+
+    # 計算前の期間はNaNで埋める
+    pad_length = period - 1
+    rci_values = [np.nan] * pad_length + rci_values
+
+    return pd.Series(rci_values, index=df.index)
