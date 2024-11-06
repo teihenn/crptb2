@@ -10,6 +10,14 @@ class DiscordNotifier:
     Discord通知を送信するクラス
     """
 
+    # Discordのメッセージカラー定数
+    COLORS = {
+        "debug": 0x808080,  # グレー色
+        "info": 0x00FF00,  # 緑色
+        "warning": 0xFFA500,  # オレンジ色
+        "error": 0xFF0000,  # 赤色
+    }
+
     def __init__(self, webhook_url: str, enabled: bool = True):
         """
         Parameters:
@@ -23,7 +31,9 @@ class DiscordNotifier:
         self.logger = Logger.get_logger()
         self.enabled = enabled
 
-    def send_message(self, message: str, title: Optional[str] = None) -> bool:
+    def send_message(
+        self, message: str, title: Optional[str] = None, level: str = "info"
+    ) -> bool:
         """
         Discordにメッセージを送信する
 
@@ -33,11 +43,21 @@ class DiscordNotifier:
             送信するメッセージ
         title : str, optional
             メッセージのタイトル
+        level : str, default="info"
+            メッセージレベル ("debug", "info", "warning", "error")
 
         Returns:
         --------
         bool
             送信成功ならTrue、失敗ならFalse
+
+        Examples:
+        --------
+        >>> notifier = DiscordNotifier(webhook_url)
+        >>> notifier.send_message("デバッグ情報", level="debug")  # グレー
+        >>> notifier.send_message("通常の情報", level="info")     # 緑
+        >>> notifier.send_message("警告", level="warning")        # オレンジ
+        >>> notifier.send_message("エラー", level="error")        # 赤
         """
         if not self.enabled:
             return True  # 無効の場合は成功扱い
@@ -49,7 +69,7 @@ class DiscordNotifier:
                     {
                         "title": title,
                         "description": message,
-                        "color": 0x00FF00,  # 緑色
+                        "color": self.COLORS.get(level, self.COLORS["info"]),
                     }
                 ]
                 if title
@@ -83,7 +103,7 @@ class DiscordNotifier:
         title : str, optional
             メッセージのタイトル
         level : str, default="info"
-            ログレベル ("debug", "info", "warning", "error", "critical")
+            メッセージレベル ("debug", "info", "warning", "error")
 
         Returns:
         --------
@@ -96,5 +116,5 @@ class DiscordNotifier:
 
         # Discord通知が有効な場合のみ送信
         if self.enabled:
-            return self.send_message(message, title)
+            return self.send_message(message, title, level)
         return True
