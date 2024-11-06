@@ -20,7 +20,10 @@ class MyExchange:
         """取引所インスタンスを作成"""
         exchange_class = getattr(ccxt, config.name)
         exchange = exchange_class(config.get_ccxt_config())
-        return cls(exchange)
+        # Bybitのtestnetモードを有効にする
+        if config.name == "bybit" and config.testnet:
+            exchange.set_sandbox_mode(True)
+
 
     def fetch_ohlcv(
         self, symbol: str, timeframe: str = "15m", limit: Optional[int] = None

@@ -26,6 +26,7 @@ class ExchangeConfig:
     max_position: float
     retry_count: int
     retry_interval: int
+    testnet: bool = False
 
     def __repr__(self) -> str:
         """機密情報をマスキングして文字列表現を返す"""
