@@ -4,10 +4,9 @@ from typing import List, Optional
 import ccxt
 
 from src.config.config import ExchangeConfig
+from src.exchanges.bybit import config as bybit_config
 from src.utils.discord import DiscordNotifier
 from src.utils.logger import Logger
-
-# from src.exchanges import bybit
 
 logger = Logger.get_logger()
 
@@ -23,14 +22,18 @@ class MyExchange:
         exchange_class = getattr(ccxt, config.name)
         exchange = exchange_class(config.get_ccxt_config())
 
-        # Bybitのtestnetモードを有効にする
-        if config.name == "bybit" and config.testnet:
-            discord.print_and_notify(
-                "Bybitのtestnetで稼働.", title="Bybit testnet mode", level="info"
-            )
-            exchange.set_sandbox_mode(True)
+        if config.name == "bybit":
+            if config.testnet:
+                exchange.set_sandbox_mode(True)
+                discord.print_and_notify(
+                    "Bybitのtestnetで稼働.", title="Bybit testnet mode", level="info"
+                )
 
-        return cls(exchange, discord)
+            # レバレッジと証拠金モードを設定
+            bybit_config(exchange, config)
+
+        instance = cls(exchange, discord)
+        return instance
 
     def fetch_ohlcv(
         self, symbol: str, timeframe: str = "15m", limit: Optional[int] = None

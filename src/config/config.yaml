@@ -10,10 +10,10 @@ exchange:
   api_secret: ""
   symbol: BTCUSDT
   position_size: 0.001
-  leverage: 1
-  buy_leverage: 1
-  sell_leverage: 1
-  margin_type: isolated
+  leverage: 10
+  buy_leverage: 10
+  sell_leverage: 10
+  margin_type: cross
   timeframe: 15m
   max_position: 0.001
   retry_count: 3
