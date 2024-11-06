@@ -10,15 +10,18 @@ class DiscordNotifier:
     Discord通知を送信するクラス
     """
 
-    def __init__(self, webhook_url: str):
+    def __init__(self, webhook_url: str, enabled: bool = True):
         """
         Parameters:
         -----------
         webhook_url : str
             DiscordのWebhook URL
+        enabled : bool, default=True
+            Discord通知の有効/無効
         """
         self.webhook_url = webhook_url
         self.logger = Logger.get_logger()
+        self.enabled = enabled
 
     def send_message(self, message: str, title: Optional[str] = None) -> bool:
         """
@@ -36,6 +39,9 @@ class DiscordNotifier:
         bool
             送信成功ならTrue、失敗ならFalse
         """
+        if not self.enabled:
+            return True  # 無効の場合は成功扱い
+
         try:
             payload = {
                 "content": message if not title else None,
@@ -82,11 +88,13 @@ class DiscordNotifier:
         Returns:
         --------
         bool
-            Discord送信成功ならTrue、失敗ならFalse
+            Discord送信成功（または無効時）ならTrue、失敗ならFalse
         """
         # ログレベルに応じてログ出力
         log_func = getattr(self.logger, level.lower())
         log_func(message)
 
-        # Discordに送信
-        return self.send_message(message, title)
+        # Discord通知が有効な場合のみ送信
+        if self.enabled:
+            return self.send_message(message, title)
+        return True

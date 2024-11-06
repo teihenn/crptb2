@@ -22,4 +22,4 @@ exchange:
 
 discord:
   webhook_url: ""
-  enabled: true
+  enabled: false

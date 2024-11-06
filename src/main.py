@@ -64,10 +64,12 @@ def main():
 
     try:
         # 取引所の初期化
-        exchange: myexc.MyExchange = myexc.MyExchange.create(config.exchange)
+        exchange: myexc.MyExchange = myexc.MyExchange.create(
+            config.exchange, config.discord.webhook_url
+        )
 
         # ストラテジーの初期化
-        strategy = RCIStrategy(config.exchange)
+        strategy = RCIStrategy(config)
 
         # 初期データの取得
         initial_data = exchange.fetch_ohlcv(
@@ -124,16 +126,9 @@ def main():
                 # インジケーターを計算
                 df = strategy.calculate_indicators(strategy.historical_data)
 
-                # 現在ポジションがある場合、決済判断
+                # 現在ポジションがある場合、決済判断し条件を満たせば全決済
                 if strategy.position and strategy.should_exit(df):
-                    if strategy.position == "long":
-                        exchange.create_market_sell_order(
-                            config.exchange.symbol, config.exchange.position_size
-                        )
-                    else:
-                        exchange.create_market_buy_order(
-                            config.exchange.symbol, config.exchange.position_size
-                        )
+                    exchange.close_all_position(config.exchange.symbol)
                     strategy.position = None
 
                 # エントリー判断

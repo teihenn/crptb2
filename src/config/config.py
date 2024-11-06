@@ -44,17 +44,24 @@ class ExchangeConfig:
             f"timeframe='{self.timeframe}', "
             f"max_position={self.max_position}, "
             f"retry_count={self.retry_count}, "
-            f"retry_interval={self.retry_interval}"
+            f"retry_interval={self.retry_interval}, "
+            f"testnet={self.testnet}"
             f")"
         )
 
     def get_ccxt_config(self) -> Dict[str, Any]:
+        """
+        CCXT用の設定を返す
+        TODO: 現状Bybit USDT無期限先物用の設定を固定値として設定している
+        """
         return {
             "apiKey": self.api_key,
             "secret": self.api_secret,
             "enableRateLimit": True,
             "options": {
-                "defaultType": "future",
+                "defaultType": "linear",  # USDT無期限先物
+                "defaultMarket": "linear",  # 市場タイプ
+                "market": "linear",  # 明示的な指定
             },
         }
 
