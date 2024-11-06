@@ -64,9 +64,7 @@ def main():
 
     try:
         # 取引所の初期化
-        exchange: myexc.MyExchange = myexc.MyExchange.create(
-            config.exchange, config.discord.webhook_url
-        )
+        exchange: myexc.MyExchange = myexc.MyExchange.create(config.exchange, discord)
 
         # ストラテジーの初期化
         strategy = RCIStrategy(config)
