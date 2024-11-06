@@ -83,9 +83,7 @@ class MyExchange:
             title="成行買い注文",
             level="info",
         )
-        return self._exchange.create_market_buy_order(
-            symbol, amount, params={"reduceOnly": True}
-        )
+        return self._exchange.create_market_buy_order(symbol, amount)
 
     def create_market_sell_order(self, symbol: str, amount: float):
         """成行売り注文"""
@@ -94,9 +92,7 @@ class MyExchange:
             title="成行売り注文",
             level="info",
         )
-        return self._exchange.create_market_sell_order(
-            symbol, amount, params={"reduceOnly": True}
-        )
+        return self._exchange.create_market_sell_order(symbol, amount)
 
     def get_position_size(self, symbol: str) -> float:
         """
