@@ -25,6 +25,9 @@ class MyExchange:
 
         # Bybitのtestnetモードを有効にする
         if config.name == "bybit" and config.testnet:
+            discord.print_and_notify(
+                "Bybitのtestnetで稼働.", title="Bybit testnet mode", level="info"
+            )
             exchange.set_sandbox_mode(True)
 
         return cls(exchange, discord)
@@ -75,14 +78,22 @@ class MyExchange:
 
     def create_market_buy_order(self, symbol: str, amount: float):
         """成行買い注文"""
-        logger.info(f"Creating market buy order - Symbol: {symbol}, Amount: {amount}")
+        self._discord.print_and_notify(
+            f"Creating market buy order - Symbol: {symbol}, Amount: {amount}",
+            title="成行買い注文",
+            level="info",
+        )
         return self._exchange.create_market_buy_order(
             symbol, amount, params={"reduceOnly": True}
         )
 
     def create_market_sell_order(self, symbol: str, amount: float):
         """成行売り注文"""
-        logger.info(f"Creating market sell order - Symbol: {symbol}, Amount: {amount}")
+        self._discord.print_and_notify(
+            f"Creating market sell order - Symbol: {symbol}, Amount: {amount}",
+            title="成行売り注文",
+            level="info",
+        )
         return self._exchange.create_market_sell_order(
             symbol, amount, params={"reduceOnly": True}
         )
@@ -114,7 +125,11 @@ class MyExchange:
                 return float(balance[base_currency]["free"])
 
         except Exception as e:
-            logger.error(f"ポジションサイズの取得に失敗: {str(e)}")
+            self._discord.print_and_notify(
+                f"ポジションサイズの取得に失敗: {str(e)}",
+                title="ポジションサイズ取得エラー",
+                level="error",
+            )
             raise
 
         raise NotImplementedError(
@@ -134,8 +149,9 @@ class MyExchange:
 
             if position_size == 0:
                 message = "決済すべきポジションがありません"
-                logger.info(message)
-                self._discord.print_and_notify(message)
+                self._discord.print_and_notify(
+                    message, title="ポジション決済", level="warning"
+                )
                 return
 
             if position_size > 0:
@@ -144,19 +160,22 @@ class MyExchange:
                     symbol, abs(position_size), params={"reduceOnly": True}
                 )
                 message = f"ロングポジションを決済しました: {order}"
-                logger.info(message)
-                self._discord.print_and_notify(message)
+                self._discord.print_and_notify(
+                    message, title="ポジション決済", level="info"
+                )
             else:
                 # ショートポジションの決済（成行買い）
                 order = self._exchange.create_market_buy_order(
                     symbol, abs(position_size), params={"reduceOnly": True}
                 )
                 message = f"ショートポジションを決済しました: {order}"
-                logger.info(message)
-                self._discord.print_and_notify(message)
+                self._discord.print_and_notify(
+                    message, title="ポジション決済", level="info"
+                )
 
         except Exception as e:
             error_message = f"ポジション決済に失敗: {str(e)}"
-            logger.error(error_message)
-            self._discord.print_and_notify(error_message, level="error")
+            self._discord.print_and_notify(
+                error_message, title="ポジション決済エラー", level="error"
+            )
             raise

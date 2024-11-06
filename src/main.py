@@ -59,8 +59,9 @@ def main():
     logger.info("\n")  # 前のログと区切るために改行
 
     bot_activate_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    discord.print_and_notify(f"🤖 Starting trading bot... ({bot_activate_time})")
-    discord.print_and_notify(f"Config: {config}")
+    discord.print_and_notify(
+        f"Config: {config}", title=f"🤖 Starting trading bot... ({bot_activate_time})"
+    )
 
     try:
         # 取引所の初期化
@@ -84,7 +85,7 @@ def main():
 
         # 時刻オフセットを取得
         time_offset = exchange.get_time_offset()
-        logger.info(f"サーバー時刻とのオフセット: {time_offset}ms")
+        discord.print_and_notify(f"サーバー時刻とのオフセット: {time_offset}ms")
 
         while True:
             try:
@@ -97,7 +98,9 @@ def main():
                 # 待機時間を計算（秒に変換）
                 wait_time = (next_candle_time - current_server_time) / 1000
                 if wait_time > 0:
-                    logger.debug(f"ローソク足更新までの待機時間: {wait_time}秒")
+                    discord.print_and_notify(
+                        f"ローソク足更新までの待機時間: {wait_time}秒"
+                    )
                     time.sleep(wait_time)
 
                 # 少し待機して確実に新しいローソク足のデータを取得できるようにする。
@@ -107,7 +110,10 @@ def main():
                 # 定期的にオフセットを再計算
                 if time.time() % 3600 < 10:  # 1時間ごとに更新
                     time_offset = exchange.get_time_offset()
-                    logger.info(f"サーバー時刻とのオフセットを更新: {time_offset}ms")
+                    discord.print_and_notify(
+                        f"サーバー時刻とのオフセットを更新: {time_offset}ms",
+                        level="debug",
+                    )
 
                 # 最新の確定足を取得
                 ohlcv = exchange.fetch_ohlcv(
@@ -156,12 +162,18 @@ def main():
                     f"スタックトレース:\n{traceback.format_exc()}"
                 )
 
-                discord.print_and_notify(error_message, "エラー通知", level="error")
+                discord.print_and_notify(
+                    error_message, title="エラー通知", level="error"
+                )
 
                 time.sleep(config.exchange.retry_interval)
 
     except Exception as e:
-        logger.error(f"初期化時にエラーが発生しました: {str(e)}", exc_info=True)
+        discord.print_and_notify(
+            f"初期化時にエラーが発生しました: {str(e)}",
+            title="初期化エラー",
+            level="error",
+        )
         raise
 
 
