@@ -138,14 +138,9 @@ def main():
                 # エントリー判断
                 should_entry, position = strategy.should_entry(df)
                 if should_entry and not strategy.position:
-                    if position == "long":
-                        exchange.create_market_buy_order(
-                            config.exchange.symbol, config.exchange.position_size
-                        )
-                    else:
-                        exchange.create_market_sell_order(
-                            config.exchange.symbol, config.exchange.position_size
-                        )
+                    exchange.place_order(
+                        config.exchange.symbol, position, config.exchange.position_size
+                    )
                     strategy.position = position
 
             except Exception as e:

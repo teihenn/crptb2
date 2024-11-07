@@ -12,8 +12,11 @@ logger = Logger.get_logger()
 
 
 class MyExchange:
-    def __init__(self, exchange: ccxt.Exchange, discord: DiscordNotifier):
+    def __init__(
+        self, exchange: ccxt.Exchange, config: ExchangeConfig, discord: DiscordNotifier
+    ):
         self._exchange = exchange
+        self._config = config
         self._discord = discord
 
     @classmethod
@@ -32,7 +35,7 @@ class MyExchange:
             # レバレッジと証拠金モードを設定
             bybit_config(exchange, config)
 
-        instance = cls(exchange, discord)
+        instance = cls(exchange, config, discord)
         return instance
 
     def fetch_ohlcv(
@@ -79,23 +82,43 @@ class MyExchange:
         local_time = int(time.time() * 1000)  # ローカル時刻をミリ秒に変換
         return server_time - local_time
 
-    def create_market_buy_order(self, symbol: str, amount: float):
-        """成行買い注文"""
-        self._discord.print_and_notify(
-            f"Creating market buy order - Symbol: {symbol}, Amount: {amount}",
-            title="成行買い注文",
-            level="info",
-        )
-        return self._exchange.create_market_buy_order(symbol, amount)
+    def place_order(self, symbol: str, side: str, amount: float) -> Optional[dict]:
+        """
+        ポジションサイズをチェックして成行注文を実行
 
-    def create_market_sell_order(self, symbol: str, amount: float):
-        """成行売り注文"""
-        self._discord.print_and_notify(
-            f"Creating market sell order - Symbol: {symbol}, Amount: {amount}",
-            title="成行売り注文",
-            level="info",
-        )
-        return self._exchange.create_market_sell_order(symbol, amount)
+        Args:
+            symbol (str): 取引ペア
+            side (str): 注文サイド ("buy" or "sell")
+            amount (float): 注文数量
+
+        Returns:
+            Optional[dict]: 注文が成功した場合は注文情報、制限された場合はNone
+        """
+        current_position = self.get_position_size(symbol)
+        new_position_size = current_position + (amount if side == "buy" else -amount)
+
+        if abs(new_position_size) > self._config.max_position:
+            self._discord.print_and_notify(
+                f"最大ポジション数量({self._config.max_position})を超えるため注文をスキップ(現在のポジションサイズ: {current_position})",
+                title="注文制限",
+                level="warning",
+            )
+            return None
+
+        if side == "buy":
+            self._discord.print_and_notify(
+                f"Creating market buy order - Symbol: {symbol}, Amount: {amount}",
+                title="成行買い注文",
+                level="info",
+            )
+            return self._exchange.create_market_buy_order(symbol, amount)
+        else:
+            self._discord.print_and_notify(
+                f"Creating market sell order - Symbol: {symbol}, Amount: {amount}",
+                title="成行売り注文",
+                level="info",
+            )
+            return self._exchange.create_market_sell_order(symbol, amount)
 
     def get_position_size(self, symbol: str) -> float:
         """
