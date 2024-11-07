@@ -16,8 +16,8 @@ exchange:
   margin_type: cross
   timeframe: 15m
   max_position: 0.001
-  retry_count: 3
-  retry_interval: 5
+  retry_count: 5
+  retry_interval: 10
   testnet: true
 
 discord:

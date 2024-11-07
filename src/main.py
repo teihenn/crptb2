@@ -63,6 +63,8 @@ def main():
     discord.print_and_notify(f"🤖 Starting trading bot... ({bot_activate_time})")
     discord.print_and_notify(f"Config: {config}", title="Config")
 
+    error_count = 0
+
     try:
         # 取引所の初期化
         exchange: myexc.MyExchange = myexc.MyExchange.create(config.exchange, discord)
@@ -158,18 +160,26 @@ def main():
                 func_name = error_location.name
 
                 error_message = (
-                    f"エラーが発生したため異常終了します:\n"
+                    f"エラーが発生しました。{config.exchange.retry_interval}秒後にリトライします:\n"
                     f"場所: {file_name}, 行: {line_no}, 関数: {func_name}\n"
                     f"種類: {type(e).__name__}\n"
                     f"詳細: {str(e)}\n"
                     f"スタックトレース:\n{traceback.format_exc()}"
                 )
-
                 discord.print_and_notify(
                     error_message, title="エラー通知", level="error"
                 )
 
-                exit()
+                error_count += 1
+                if config.exchange.retry_count < error_count:
+                    discord.print_and_notify(
+                        "リトライ回数を超えたため異常終了します。",
+                        title="エラー通知",
+                        level="error",
+                    )
+                    exit()
+                else:
+                    time.sleep(config.exchange.retry_interval)
 
     except Exception as e:
         discord.print_and_notify(
