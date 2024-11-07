@@ -5,7 +5,7 @@ from datetime import datetime
 import src.exchanges.my_exchange as myexc
 from src.config.config import Config
 from src.historical_data import HistoricalData
-from src.strategy.new_rci_3 import RCIStrategy
+from src.strategy.my_strategy import MyStrategy
 from src.utils.discord import DiscordNotifier
 from src.utils.logger import Logger
 
@@ -68,7 +68,7 @@ def main():
         exchange: myexc.MyExchange = myexc.MyExchange.create(config.exchange, discord)
 
         # ストラテジーの初期化
-        strategy = RCIStrategy(config)
+        strategy = MyStrategy(config)
 
         # 保持しておく必要があるバー数。
         # 例: ストラテジーで指標計算に必要なバー数が101の場合。
@@ -131,6 +131,12 @@ def main():
 
                 # インジケーターを計算
                 df = strategy.calculate_indicators(historical_data.data)
+
+                # チャートの作成と送信
+                chart_image, timestamp = strategy.create_chart(df)
+                discord.send_image(
+                    image_data=chart_image, message=f"チャート更新 ({timestamp})"
+                )
 
                 # 現在ポジションがある場合、決済判断し条件を満たせば全決済
                 if strategy.position and strategy.should_exit(df):

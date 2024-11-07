@@ -1,3 +1,4 @@
+import io
 from typing import Optional
 
 import requests
@@ -118,3 +119,40 @@ class DiscordNotifier:
         if self.enabled:
             return self.send_message(message, title, level)
         return True
+
+    def send_image(self, image_data: io.BytesIO, message: str = "") -> bool:
+        """
+        画像データをDiscordに送信する
+
+        Parameters:
+        -----------
+        image_data : io.BytesIO
+            送信する画像データ
+        message : str, optional
+            画像と一緒に送信するメッセージ
+
+        Returns:
+        --------
+        bool
+            送信成功ならTrue、失敗ならFalse
+        """
+        if not self.enabled:
+            return True
+
+        try:
+            files = {"file": ("chart.png", image_data, "image/png")}
+            payload = {"content": message}
+
+            response = requests.post(self.webhook_url, data=payload, files=files)
+
+            if response.status_code == 204:
+                return True
+            else:
+                self.logger.error(
+                    f"Discord画像送信失敗 - ステータスコード: {response.status_code}"
+                )
+                return False
+
+        except Exception as e:
+            self.logger.error(f"Discord画像送信エラー: {str(e)}")
+            return False
