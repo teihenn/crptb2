@@ -23,7 +23,7 @@ def calculate_rci(df: pd.DataFrame, period: int) -> pd.Series:
 
     # 移動窓でRCIを計算
     rci_values = []
-    close_series = df["Close"]
+    close_series = df["close"]
 
     for i in range(period - 1, len(df)):
         window = close_series.iloc[i - period + 1 : i + 1]

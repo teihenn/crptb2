@@ -11,7 +11,7 @@ class TestIndicators(unittest.TestCase):
         RCI計算のテスト(RCI=100)
         テストデータ参考: https://kabu.com/investment/guide/technical/14.html
         """
-        test_data = pd.DataFrame({"Close": [500, 510, 515, 520, 530]})
+        test_data = pd.DataFrame({"close": [500, 510, 515, 520, 530]})
 
         # 期間を変えてテスト
         period = 5
@@ -25,7 +25,7 @@ class TestIndicators(unittest.TestCase):
         RCI計算のテスト(RCI=-100)
         テストデータ参考: https://kabu.com/investment/guide/technical/14.html
         """
-        test_data = pd.DataFrame({"Close": [530, 520, 515, 510, 500]})
+        test_data = pd.DataFrame({"close": [530, 520, 515, 510, 500]})
 
         # 期間を変えてテスト
         period = 5

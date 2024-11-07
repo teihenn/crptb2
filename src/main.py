@@ -4,6 +4,7 @@ from datetime import datetime
 
 import src.exchanges.my_exchange as myexc
 from src.config.config import Config
+from src.historical_data import HistoricalData
 from src.strategy.new_rci_3 import RCIStrategy
 from src.utils.discord import DiscordNotifier
 from src.utils.logger import Logger
@@ -59,9 +60,8 @@ def main():
     logger.info("\n")  # 前のログと区切るために改行
 
     bot_activate_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    discord.print_and_notify(
-        f"Config: {config}", title=f"🤖 Starting trading bot... ({bot_activate_time})"
-    )
+    discord.print_and_notify(f"🤖 Starting trading bot... ({bot_activate_time})")
+    discord.print_and_notify(f"Config: {config}", title="Config")
 
     try:
         # 取引所の初期化
@@ -70,18 +70,24 @@ def main():
         # ストラテジーの初期化
         strategy = RCIStrategy(config)
 
+        # 保持しておく必要があるバー数。
+        # 例: ストラテジーで指標計算に必要なバー数が101の場合。
+        # (100本＋1本。＋1本は一つ前の時間でも指標が計算できている必要があるため。)
+        # この場合はrequired_bars = 202となる。
+        # 202本取得した場合、確定足の本数は最新の一つを除いた201本となる。
+        # 201本あれば、100本分くらいのローソク足や指標計算結果の描画と、
+        # エントリー判断の計算に必要なデータは十分である。
+        required_bars = strategy.required_bars * 2
+
         # 初期データの取得
         initial_data = exchange.fetch_ohlcv(
             config.exchange.symbol,
             timeframe=config.exchange.timeframe,
-            limit=strategy.required_bars + 1,
+            limit=required_bars,
         )
-
-        # 初期データを履歴に追加（最後の未確定足を除外）
-        for candle in initial_data[:-1]:  # 最後の要素（未確定足）を除外
-            timestamp = candle[0]
-            close_price = float(candle[4])
-            strategy.update_historical_data(timestamp, close_price, enable_log=False)
+        historical_data = HistoricalData(
+            required_bars, initial_data[:-1], discord
+        )  # 最後の要素（未確定足）を除外
 
         # 時刻オフセットを取得
         time_offset = exchange.get_time_offset()
@@ -119,16 +125,12 @@ def main():
                 ohlcv = exchange.fetch_ohlcv(
                     config.exchange.symbol,
                     timeframe=config.exchange.timeframe,
-                    limit=2,  # 2つ取得して、最新の確定足を使用する
+                    limit=2,  # 2つ取得すると、先頭要素が最新の確定足
                 )
-
-                latest_candle = ohlcv[-2]  # 最後から2番目（確定済み）のローソク足を使用
-                timestamp = latest_candle[0]
-                close_price = float(latest_candle[4])
-                strategy.update_historical_data(timestamp, close_price)
+                historical_data.update(ohlcv[0])  # 確定済みのローソク足を使用
 
                 # インジケーターを計算
-                df = strategy.calculate_indicators(strategy.historical_data)
+                df = strategy.calculate_indicators(historical_data.data)
 
                 # 現在ポジションがある場合、決済判断し条件を満たせば全決済
                 if strategy.position and strategy.should_exit(df):
@@ -150,7 +152,7 @@ def main():
                 func_name = error_location.name
 
                 error_message = (
-                    f"エラーが発生しました:\n"
+                    f"エラーが発生したため異常終了します:\n"
                     f"場所: {file_name}, 行: {line_no}, 関数: {func_name}\n"
                     f"種類: {type(e).__name__}\n"
                     f"詳細: {str(e)}\n"
@@ -161,15 +163,15 @@ def main():
                     error_message, title="エラー通知", level="error"
                 )
 
-                time.sleep(config.exchange.retry_interval)
+                exit()
 
     except Exception as e:
         discord.print_and_notify(
-            f"初期化時にエラーが発生しました: {str(e)}",
+            f"初期化時にエラーが発生したので異常終了します: {str(e)}",
             title="初期化エラー",
             level="error",
         )
-        raise
+        exit()
 
 
 if __name__ == "__main__":

@@ -24,9 +24,9 @@ def convert_to_jst(
     Examples:
     --------
     DataFrameの場合:
-    >>> df = pd.DataFrame({'Close': [100, 200]}, index=[1709692800000, 1709692860000])
+    >>> df = pd.DataFrame({'close': [100, 200]}, index=[1709692800000, 1709692860000])
     >>> convert_to_jst(df)
-                                 Close
+                                 close
     2024-03-06 12:00:00+09:00    100
     2024-03-06 12:01:00+09:00    200
 
@@ -37,9 +37,9 @@ def convert_to_jst(
                   dtype='datetime64[ns, Asia/Tokyo]')
 
     秒単位の場合:
-    >>> df = pd.DataFrame({'Close': [100]}, index=[1709692800])
+    >>> df = pd.DataFrame({'close': [100]}, index=[1709692800])
     >>> convert_to_jst(df, from_unit='s')
-                                 Close
+                                 close
     2024-03-06 12:00:00+09:00    100
     """
     if isinstance(df_or_index, pd.DataFrame):
