@@ -17,17 +17,19 @@ class ExchangeConfig:
     api_key: str
     api_secret: str
     symbol: str
-    position_size: float
+    position_size: float  # 一度のトレードで発注するポジションサイズ
     leverage: int
     buy_leverage: int
     sell_leverage: int
     margin_type: str  # isolated or cross
     timeframe: str
-    max_position: float
+    max_position: float  # 一度に持てるポジションの最大値(正の数)
     retry_count: int
     retry_interval: int
     testnet: bool
     dry_run: bool  # エントリー条件を満たしても実際には注文をしないモード
+    simulation_initial_balance: float
+    fee_rate: float
 
     def __repr__(self) -> str:
         """機密情報をマスキングして文字列表現を返す"""

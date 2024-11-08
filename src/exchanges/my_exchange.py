@@ -7,6 +7,7 @@ from src.config.config import ExchangeConfig
 from src.exchanges.bybit import config as bybit_config
 from src.utils.discord import DiscordNotifier
 from src.utils.logger import Logger
+from src.utils.pnl_tracker import PnLTracker
 
 logger = Logger.get_logger()
 
@@ -18,6 +19,11 @@ class MyExchange:
         self._exchange = exchange
         self._config = config
         self._discord = discord
+        self.pnl_tracker = PnLTracker(
+            simulation_initial_balance=config.simulation_initial_balance,
+            fee_rate=config.fee_rate,
+            discord=discord,
+        )
 
     @classmethod
     def create(cls, config: ExchangeConfig, discord: DiscordNotifier) -> "MyExchange":
@@ -105,15 +111,21 @@ class MyExchange:
             )
             return None
 
-        # dry_runモードの場合は注文を実行せずにログのみ出力
+        # dry_runモードの場合
         if self._config.dry_run:
-            message = f"[DRY RUN] 注文をシミュレート - Symbol: {symbol}, Side: {side}, Amount: {amount}"
-            self._discord.print_and_notify(
-                message,
-                title="注文シミュレーション",
-                level="info",
+            # 現在の価格を取得
+            ticker = self._exchange.fetch_ticker(symbol)
+            price = ticker["last"]
+
+            # シミュレーション実行と通知メッセージの生成
+            order_info = self.pnl_tracker.simulate_trade(
+                symbol=symbol,
+                side=side,
+                price=price,
+                amount=amount,
             )
-            return {"dry_run": True, "symbol": symbol, "side": side, "amount": amount}
+
+            return order_info
 
         if side == "buy":
             self._discord.print_and_notify(
@@ -176,6 +188,23 @@ class MyExchange:
             symbol (str): 取引ペア（例: 'BTC/USDT:USDT'）
         """
         try:
+            if self._config.dry_run:
+                # 今持っているポジション(＝今保有中の全数量)
+                position_size = self.pnl_tracker.position.amount
+
+                # 現在の価格を取得
+                ticker = self._exchange.fetch_ticker(symbol)
+                price = ticker["last"]
+
+                side = "sell" if position_size > 0 else "buy"
+                self.pnl_tracker.simulate_trade(
+                    symbol=symbol,
+                    side=side,
+                    price=price,
+                    amount=abs(position_size),
+                )
+                return
+
             # 現在のポジションサイズを取得
             position_size = self.get_position_size(symbol)
 
