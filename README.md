@@ -4,6 +4,8 @@ Crypto Trading Bot.
 
 実際に使用しているストラテジーはcrptb2-strategyリポジトリ(private)に格納。
 
+保守性よりとりあえずスピード重視で実装中...
+
 ## command
 
 - Botを起動する
