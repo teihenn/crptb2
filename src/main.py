@@ -148,10 +148,15 @@ def main():
                 # エントリー判断
                 should_entry, position = strategy.should_entry(df)
                 if should_entry and not strategy.position:
+                    # exchange.place_order(
+                    #    config.exchange.symbol, position, config.exchange.position_size
+                    # )
                     exchange.place_order(
-                        config.exchange.symbol, position, config.exchange.position_size
+                        config.exchange.symbol,
+                        position,
+                        config.exchange.max_position,  # 一度にmax_position分のポジションを持つ方針
                     )
-                    strategy.position = position
+                    strategy.position = position  # DryRun時もポジション方向を記録
 
             except Exception as e:
                 error_location = traceback.extract_tb(e.__traceback__)[-1]
