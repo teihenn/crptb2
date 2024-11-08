@@ -26,7 +26,8 @@ class ExchangeConfig:
     max_position: float
     retry_count: int
     retry_interval: int
-    testnet: bool = False
+    testnet: bool
+    dry_run: bool  # エントリー条件を満たしても実際には注文をしないモード
 
     def __repr__(self) -> str:
         """機密情報をマスキングして文字列表現を返す"""
@@ -45,7 +46,8 @@ class ExchangeConfig:
             f"max_position={self.max_position}, "
             f"retry_count={self.retry_count}, "
             f"retry_interval={self.retry_interval}, "
-            f"testnet={self.testnet}"
+            f"testnet={self.testnet}, "
+            f"dry_run={self.dry_run}"
             f")"
         )
 

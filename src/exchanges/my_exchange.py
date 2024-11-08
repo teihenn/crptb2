@@ -105,6 +105,16 @@ class MyExchange:
             )
             return None
 
+        # dry_runモードの場合は注文を実行せずにログのみ出力
+        if self._config.dry_run:
+            message = f"[DRY RUN] 注文をシミュレート - Symbol: {symbol}, Side: {side}, Amount: {amount}"
+            self._discord.print_and_notify(
+                message,
+                title="注文シミュレーション",
+                level="info",
+            )
+            return {"dry_run": True, "symbol": symbol, "side": side, "amount": amount}
+
         if side == "buy":
             self._discord.print_and_notify(
                 f"Creating market buy order - Symbol: {symbol}, Amount: {amount}",
