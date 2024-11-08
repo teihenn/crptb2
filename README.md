@@ -12,6 +12,12 @@ Crypto Trading Bot.
 uv run python -m src.main
 ```
 
+- Botを常時稼働にしておく
+
+```bash
+nohup uv run python -m src.main &
+```
+
 - すべてのunittestを実行する
 
 ```bash
