@@ -158,6 +158,9 @@ def main():
                     )
                     strategy.position = position  # DryRun時もポジション方向を記録
 
+                if config.exchange.dry_run:
+                    exchange.pnl_tracker.print_summary()
+
             except Exception as e:
                 error_location = traceback.extract_tb(e.__traceback__)[-1]
                 file_name = error_location.filename.split("/")[-1]  # ファイル名のみ抽出

@@ -22,6 +22,7 @@ class MyExchange:
         self.pnl_tracker = PnLTracker(
             simulation_initial_balance=config.simulation_initial_balance,
             fee_rate=config.fee_rate,
+            leverage=config.leverage,
             discord=discord,
         )
 
@@ -142,51 +143,60 @@ class MyExchange:
             )
             return self._exchange.create_market_sell_order(symbol, amount)
 
-    def get_position_size(self, symbol: str) -> float:
+    def get_position_info(self, symbol: str) -> tuple[float, Optional[str]]:
         """
-        現在のポジションサイズを取得
+        現在のポジション情報を取得
 
         Args:
             symbol (str): 取引ペア（例: 'BTCUSDT'）
 
         Returns:
-            float: ポジションサイズ（ロングはプラス、ショートはマイナス）
+            tuple[float, Optional[str]]: (ポジションサイズ, ポジションの方向)
+            - ポジションサイズ: 常に正の値
+            - ポジションの方向: "long", "short", None（ポジションなし）
         """
         try:
             # 先物取引所の場合
             if self._exchange.has["fetchPosition"]:
                 position = self._exchange.fetch_position(symbol)
                 if position is None or position["contracts"] == 0:
-                    return 0.0
-                # contractsは保有数量、sideはポジションの方向
-                size = float(position["contracts"])
-                return size if position["side"] == "long" else -size
+                    return 0.0, None
+                return float(position["contracts"]), position["side"]
 
             # 現物取引所の場合
             elif self._exchange.has["fetchBalance"]:
                 balance = self._exchange.fetch_balance()
                 base_currency = symbol.split("/")[0]  # 例: 'BTC/USDT' -> 'BTC'
-                return float(balance[base_currency]["free"])
+                size = float(balance[base_currency]["free"])
+                return size, "long" if size > 0 else None
 
         except Exception as e:
             self._discord.print_and_notify(
-                f"ポジションサイズの取得に失敗: {str(e)}",
-                title="ポジションサイズ取得エラー",
+                f"ポジション情報の取得に失敗: {str(e)}",
+                title="ポジション情報取得エラー",
                 level="error",
             )
             raise
 
         raise NotImplementedError(
-            f"この取引所（{self._exchange.id}）はポジションサイズの取得に対応していません"
+            f"この取引所（{self._exchange.id}）はポジション情報の取得に対応していません"
         )
 
-    def close_all_position(self, symbol: str) -> None:
+    def get_position_size(self, symbol: str) -> float:
         """
-        保有中のポジション（ロング/ショート）を全て成行決済
+        現在のポジションサイズを取得（常に正の値）
 
         Args:
-            symbol (str): 取引ペア（例: 'BTC/USDT:USDT'）
+            symbol (str): 取引ペア（例: 'BTCUSDT'）
+
+        Returns:
+            float: ポジションサイズ（常に正の値）
         """
+        size, _ = self.get_position_info(symbol)
+        return size
+
+    def close_all_position(self, symbol: str) -> Optional[dict]:
+        """ポジションをすべて決済"""
         try:
             if self._config.dry_run:
                 # 今持っているポジション(＝今保有中の全数量)
@@ -196,7 +206,7 @@ class MyExchange:
                 ticker = self._exchange.fetch_ticker(symbol)
                 price = ticker["last"]
 
-                side = "sell" if position_size > 0 else "buy"
+                side = "sell" if self.pnl_tracker.position.side == "long" else "buy"
                 self.pnl_tracker.simulate_trade(
                     symbol=symbol,
                     side=side,
@@ -206,7 +216,7 @@ class MyExchange:
                 return
 
             # 現在のポジションサイズを取得
-            position_size = self.get_position_size(symbol)
+            position_size, position_side = self.get_position_info(symbol)
 
             if position_size == 0:
                 message = "決済すべきポジションがありません"
@@ -215,7 +225,7 @@ class MyExchange:
                 )
                 return
 
-            if position_size > 0:
+            if position_side == "long":
                 # ロングポジションの決済（成行売り）
                 order = self._exchange.create_market_sell_order(
                     symbol, abs(position_size), params={"reduceOnly": True}
@@ -224,7 +234,7 @@ class MyExchange:
                 self._discord.print_and_notify(
                     message, title="ポジション決済", level="info"
                 )
-            else:
+            elif position_side == "short":
                 # ショートポジションの決済（成行買い）
                 order = self._exchange.create_market_buy_order(
                     symbol, abs(position_size), params={"reduceOnly": True}
@@ -232,6 +242,12 @@ class MyExchange:
                 message = f"ショートポジションを決済しました: {order}"
                 self._discord.print_and_notify(
                     message, title="ポジション決済", level="info"
+                )
+            else:
+                self._discord.print_and_notify(
+                    "MyExchange.close_all_position(): ポジションの方向が不明です",
+                    title="ポジション決済",
+                    level="error",
                 )
 
         except Exception as e:
