@@ -187,7 +187,10 @@ class PnLTracker:
                 message += f"{key}: {value}\n"
 
         self.discord.print_and_notify(
-            message, title="PnLTracker.simulate_trade", level="info"
+            # message, title="PnLTracker.simulate_trade", level="info"
+            message,
+            title="PnLTracker.simulate_trade",
+            level="warning",  # 目立たせるため一旦Warningレベルにしとく
         )
 
         order_info = {"dry_run": True, "symbol": symbol, "side": side, "amount": amount}
