@@ -141,23 +141,31 @@ def main():
                 )
 
                 # 現在ポジションがある場合、決済判断し条件を満たせば全決済
-                if strategy.position and strategy.should_exit(df):
+                # if strategy.position and strategy.should_exit(df):
+                if strategy.position and strategy.should_exit2(df):
                     exchange.close_all_position(config.exchange.symbol)
                     strategy.position = None
 
                 # エントリー判断
                 should_entry, position = strategy.should_entry(df)
-                if should_entry and not strategy.position:
-                    # exchange.place_order(
-                    #    config.exchange.symbol, position, config.exchange.position_size
-                    # )
-                    exchange.place_order(
-                        config.exchange.symbol,
-                        position,
-                        config.exchange.max_position,  # 一度にmax_position分のポジションを持つ方針
-                    )
-                    strategy.position = position  # DryRun時もポジション方向を記録
+                if should_entry:
+                    if strategy.position:
+                        discord.print_and_notify(
+                            "既にポジションを持っているためエントリーしない.",
+                            level="info",
+                        )
+                    else:
+                        # exchange.place_order(
+                        #    config.exchange.symbol, position, config.exchange.position_size
+                        # )
+                        exchange.place_order(
+                            config.exchange.symbol,
+                            position,
+                            config.exchange.max_position,  # 一度にmax_position分のポジションを持つ方針
+                        )
+                        strategy.position = position  # DryRun時もポジション方向を記録
 
+                # DryRun時はPnLを表示
                 if config.exchange.dry_run:
                     exchange.pnl_tracker.print_summary()
 
