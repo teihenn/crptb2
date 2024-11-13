@@ -53,7 +53,11 @@ def main():
     # 設定の読み込み
     config = Config.load()
 
-    discord = DiscordNotifier(config.discord.webhook_url)
+    discord = DiscordNotifier(
+        config.discord.webhook_url,
+        config.discord.mention_user_id,
+        config.discord.enabled,
+    )
 
     # ロガーの初期化
     logger = Logger.get_logger()

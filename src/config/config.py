@@ -73,6 +73,7 @@ class ExchangeConfig:
 @dataclass
 class DiscordConfig:
     webhook_url: str
+    mention_user_id: str
     enabled: bool = True  # 通知の有効/無効を切り替え
 
     def __repr__(self) -> str:
@@ -80,8 +81,9 @@ class DiscordConfig:
         return (
             f"DiscordConfig("
             f"webhook_url='{'*' * 8}', "  # マスキング
-            f"enabled={self.enabled}"
-            f")"
+            f"mention_user_id={self.mention_user_id},"
+            f"enabled={self.enabled},"
+            ")"
         )
 
 

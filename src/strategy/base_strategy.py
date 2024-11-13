@@ -23,7 +23,11 @@ class BaseStrategy(ABC):
         self.logger = Logger.get_logger()
 
         # Discord通知の設定
-        self.discord = DiscordNotifier(config.discord.webhook_url)
+        self.discord = DiscordNotifier(
+            config.discord.webhook_url,
+            config.discord.mention_user_id,
+            config.discord.enabled,
+        )
 
     @abstractmethod
     def calculate_indicators(self, df: pd.DataFrame) -> pd.DataFrame:

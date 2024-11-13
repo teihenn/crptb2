@@ -26,3 +26,4 @@ exchange:
 discord:
   webhook_url: ""
   enabled: true
+  mention_user_id: "278736529084514314" # teihenn981

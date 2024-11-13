@@ -186,6 +186,7 @@ class PnLTracker:
             else:
                 message += f"{key}: {value}\n"
 
+        self.discord.send_only_mention()
         self.discord.print_and_notify(
             # message, title="PnLTracker.simulate_trade", level="info"
             message,

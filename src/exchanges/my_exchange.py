@@ -129,6 +129,7 @@ class MyExchange:
             return order_info
 
         if side == "buy":
+            self._discord.send_only_mention()
             self._discord.print_and_notify(
                 f"Creating market buy order - Symbol: {symbol}, Amount: {amount}",
                 title="成行買い注文",
@@ -136,6 +137,7 @@ class MyExchange:
             )
             return self._exchange.create_market_buy_order(symbol, amount)
         else:
+            self._discord.send_only_mention()
             self._discord.print_and_notify(
                 f"Creating market sell order - Symbol: {symbol}, Amount: {amount}",
                 title="成行売り注文",
@@ -230,6 +232,7 @@ class MyExchange:
                 order = self._exchange.create_market_sell_order(
                     symbol, abs(position_size), params={"reduceOnly": True}
                 )
+                self._discord.send_only_mention()
                 message = f"ロングポジションを決済しました: {order}"
                 self._discord.print_and_notify(
                     message, title="ポジション決済", level="info"
@@ -239,6 +242,7 @@ class MyExchange:
                 order = self._exchange.create_market_buy_order(
                     symbol, abs(position_size), params={"reduceOnly": True}
                 )
+                self._discord.send_only_mention()
                 message = f"ショートポジションを決済しました: {order}"
                 self._discord.print_and_notify(
                     message, title="ポジション決済", level="info"

@@ -19,17 +19,20 @@ class DiscordNotifier:
         "error": 0xFF0000,  # 赤色
     }
 
-    def __init__(self, webhook_url: str, enabled: bool = True):
+    def __init__(self, webhook_url: str, mention_user_id: str, enabled: bool = True):
         """
         Parameters:
         -----------
         webhook_url : str
             DiscordのWebhook URL
+        mention_user_id : str
+            DiscordのメンションするユーザーID
         enabled : bool, default=True
             Discord通知の有効/無効
         """
         self.webhook_url = webhook_url
         self.logger = Logger.get_logger()
+        self.mention_user_id = mention_user_id
         self.enabled = enabled
 
     def send_message(
@@ -90,6 +93,9 @@ class DiscordNotifier:
         except Exception as e:
             self.logger.error(f"Discord通知送信エラー: {str(e)}")
             return False
+
+    def send_only_mention(self) -> bool:
+        return self.send_message(f"<@{self.mention_user_id}>")
 
     def print_and_notify(
         self, message: str, title: Optional[str] = None, level: str = "info"
