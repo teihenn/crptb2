@@ -91,7 +91,9 @@ class PnLTracker:
 
             self.position.pnl = pnl
             self.current_balance += pnl
-            self.position = None  # 全決済しているのでNoneにする # TODO: None代入で良いの？self.tradesも消される？
+            self.position = (
+                None  # 全決済しているのでNoneにする # TODO: None代入で良いか
+            )
         else:
             # 以下の処理だと同じ方向の取引の場合は上書きされてしまうが、
             # そもそも同じ方向に複数回エントリーすることを想定した作りになっていないので
