@@ -37,6 +37,7 @@ def get_next_candle_time(timeframe: str, current_timestamp: int) -> int:
         "15m": 900000,
         "1h": 3600000,
         "4h": 14400000,
+        "8h": 28800000,
         "1d": 86400000,
     }
 
