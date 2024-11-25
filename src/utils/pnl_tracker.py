@@ -38,6 +38,7 @@ class PnLTracker:
         self, timestamp: int, side: str, price: float, amount: float
     ) -> Trade:
         # 取引手数料の計算
+        # https://www.bybit.com/ja-JP/help-center/article/Perpetual-Futures-Contract-Fees-Explained
         fee = price * amount * self.fee_rate
         trade = Trade(
             timestamp=timestamp, side=side, price=price, amount=amount, fee=fee
