@@ -21,7 +21,7 @@ exchange:
   testnet: false
   dry_run: true  # エントリー条件を満たしても実際には注文をしないモード
   simulation_initial_balance: 500  # シミュレーション用初期残高（USDT）
-  fee_rate: 0.0550  # Bybitの無期限・先物取引テイカー手数料(VIP0)
+  fee_rate: 0.00055  # Bybitの無期限・先物取引テイカー手数料(VIP0) = 0.055%
 
 discord:
   webhook_url: ""
