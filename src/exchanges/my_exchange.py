@@ -95,16 +95,16 @@ class MyExchange:
 
         Args:
             symbol (str): 取引ペア
-            side (str): 注文サイド ("buy" or "sell")
-            amount (float): 注文数量
+            side (str): 注文サイド ("long" or "short")
+            amount (float): 注文数量(正の値)
 
         Returns:
             Optional[dict]: 注文が成功した場合は注文情報、制限された場合はNone
         """
-        current_position = self.get_position_size(symbol)
-        new_position_size = current_position + (amount if side == "buy" else -amount)
+        current_position = self.get_position_size(symbol)  # 正の値
+        new_position_size = current_position + amount
 
-        if abs(new_position_size) > self._config.max_position:
+        if new_position_size > self._config.max_position:
             self._discord.print_and_notify(
                 f"最大ポジション数量({self._config.max_position})を超えるため注文をスキップ(現在のポジションサイズ: {current_position})",
                 title="注文制限",
@@ -128,7 +128,7 @@ class MyExchange:
 
             return order_info
 
-        if side == "buy":
+        if side == "long":
             self._discord.send_only_mention()
             self._discord.print_and_notify(
                 f"Creating market buy order - Symbol: {symbol}, Amount: {amount}",
