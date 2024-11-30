@@ -74,8 +74,19 @@ def main():
         # 取引所の初期化
         exchange: myexc.MyExchange = myexc.MyExchange.create(config.exchange, discord)
 
+        # 現在のポジション状態を確認
+        current_position, position_side = exchange.get_position_info(
+            config.exchange.symbol
+        )
+
         # ストラテジーの初期化
         strategy = MyStrategy(config)
+        if position_side is not None:
+            strategy.position = position_side
+            discord.print_and_notify(
+                f"既存ポジションを検出: {strategy.position}, {current_position}",
+                level="info",
+            )
 
         # 保持しておく必要があるバー数。
         # 例: ストラテジーで指標計算に必要なバー数が101の場合。
